@@ -38,7 +38,6 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MovieShow | null>(null);
   const [formData, setFormData] = useState<MovieShowFormData>({
     title: '',
@@ -123,7 +122,7 @@ const Dashboard: React.FC = () => {
       yearTime: item.yearTime,
       image: item.image || ''
     });
-    setIsEditDialogOpen(true);
+    // setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -176,7 +175,7 @@ const Dashboard: React.FC = () => {
           item.id === editingItem.id ? response.data.data : item
         ));
         toast.success('Item updated successfully!');
-        setIsEditDialogOpen(false);
+        // setIsEditDialogOpen(false);
       } else {
         // Create new item
         const response = await axios.post('http://localhost:5000/api/movie-shows', formData);
@@ -637,7 +636,7 @@ const Dashboard: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex justify-end space-x-2 pt-4">
-                                <Button type="button" variant="outline" onClick={() => {setIsEditDialogOpen(false); resetForm(); setEditingItem(null);}}>
+                                <Button type="button" variant="outline" onClick={() => {resetForm(); setEditingItem(null);}}>
                                   Cancel
                                 </Button>
                                 <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
