@@ -3,21 +3,34 @@ import { createMovieShowSchema, updateMovieShowSchema, paginationSchema, idSchem
 
 const prisma = new PrismaClient();
 
-// Get all movie shows with pagination
+// Get all movie shows with pagination, search and filter
 export const getMovieShows = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = paginationSchema.parse(req.query);
+    const { page = 1, limit = 10, search, type } = paginationSchema.parse(req.query);
 
     const skip = (page - 1) * limit;
     const take = limit;
 
+    // Build where clause for search and filter
+    const where = {};
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { director: { contains: search } }
+      ];
+    }
+    if (type && type !== 'all') {
+      where.type = type;
+    }
+
     const [movieShows, total] = await Promise.all([
       prisma.movieShow.findMany({
+        where,
         skip,
         take,
         orderBy: { createdAt: 'desc' }
       }),
-      prisma.movieShow.count()
+      prisma.movieShow.count({ where })
     ]);
 
     res.json({

@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
     image: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
       params.append('limit', '10');
 
       if (searchTerm) params.append('search', searchTerm);
-      if (filterType) params.append('type', filterType);
+      if (filterType && filterType !== 'all') params.append('type', filterType);
 
       const response = await axios.get(`http://localhost:5000/api/movie-shows?${params}`);
       const newData = response.data.data;
@@ -201,14 +201,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-lg border-b border-gray-200">
+      <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-gray-900">
                 🎬 Movie & TV Show Manager
               </h1>
-              <p className="text-gray-600 mt-1">Welcome back, <span className="font-medium text-gray-800">{user?.email}</span></p>
+              <p className="text-gray-600 text-sm">Welcome back, <span className="font-medium text-gray-800">{user?.email}</span></p>
             </div>
             <Button onClick={handleLogout} variant="outline" className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors">
               🚪 Logout
@@ -217,42 +217,49 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Your Favorite Movies & TV Shows</h2>
-              <p className="text-gray-600 mt-1">Manage your personal collection</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-              <div className="flex-1 lg:w-80">
-                <Input
-                  type="text"
-                  placeholder="Search by title, director..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Favorite Movies & TV Shows</h2>
+            <p className="text-gray-600">Manage your personal collection</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
+              <div className="flex-1 max-w-md w-full">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-400">🔍</span>
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Search by title, director..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                  />
+                </div>
               </div>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-full sm:w-40">
+                <SelectTrigger className="w-full sm:w-48 h-12 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">🎭 All Types</SelectItem>
                   <SelectItem value="Movie">🎬 Movies</SelectItem>
                   <SelectItem value="TV Show">📺 TV Shows</SelectItem>
                 </SelectContent>
               </Select>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={handleAddNew} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200">
-                  ➕ Add New Entry
-                </Button>
-              </DialogTrigger>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={handleAddNew} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <span className="mr-2">➕</span>
+                    Add New Entry
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle className="text-emerald-800">Add New Movie/TV Show</DialogTitle>
+                  <DialogTitle>Add New Movie/TV Show</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -371,11 +378,23 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          <div className="bg-white/95 backdrop-blur-sm shadow-xl rounded-lg overflow-hidden border border-gray-200/50">
-            <div className="px-6 py-4 bg-gray-50/80 backdrop-blur-sm border-b border-gray-200/50">
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200 text-center">
               <h3 className="text-lg font-semibold text-gray-900">Your Collection ({movieShows.length})</h3>
             </div>
-            <ul className="divide-y divide-gray-100">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Poster</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Title & Type</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Director</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Budget</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
               {movieShows.length === 0 ? (
                 <li className="px-6 py-12 text-center">
                   <div className="text-gray-400 mb-4">
@@ -482,65 +501,47 @@ const Dashboard: React.FC = () => {
                 </li>
               ) : (
                 movieShows.map((item) => (
-                  <li key={item.id} className="px-6 py-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-4 mb-3">
-                          {item.image && (
-                            <div className="flex-shrink-0">
-                              <img
-                                src={item.image}
-                                alt={item.title}
-                                className="w-20 h-28 object-cover rounded-lg border border-gray-200 shadow-sm"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <div className="flex items-center mb-2">
-                              <h3 className="text-xl font-semibold text-gray-900 mr-3">{item.title}</h3>
-                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                item.type === 'Movie'
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                  : 'bg-purple-100 text-purple-800 border border-purple-200'
-                              }`}>
-                                {item.type === 'Movie' ? '🎬' : '📺'} {item.type}
-                              </span>
-                            </div>
-                          </div>
+                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-center">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-16 h-20 object-cover rounded-lg border border-gray-200 shadow-sm mx-auto"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-16 h-20 bg-gray-100 rounded-lg flex items-center justify-center mx-auto">
+                          <span className="text-gray-400 text-2xl">🎬</span>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                          <div className="flex items-center">
-                            <span className="text-gray-500 mr-2">🎭</span>
-                            <span className="font-medium text-gray-700">Director:</span>
-                            <span className="ml-1 text-gray-900">{item.director}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-gray-500 mr-2">💰</span>
-                            <span className="font-medium text-gray-700">Budget:</span>
-                            <span className="ml-1 text-gray-900">{item.budget}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-gray-500 mr-2">📍</span>
-                            <span className="font-medium text-gray-700">Location:</span>
-                            <span className="ml-1 text-gray-900">{item.location}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-gray-500 mr-2">⏱️</span>
-                            <span className="font-medium text-gray-700">Duration:</span>
-                            <span className="ml-1 text-gray-900">{item.duration}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-gray-500 mr-2">📅</span>
-                            <span className="font-medium text-gray-700">Year/Time:</span>
-                            <span className="ml-1 text-gray-900">{item.yearTime}</span>
-                          </div>
-                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <h3 className="text-sm font-semibold text-gray-900">{item.title}</h3>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          item.type === 'Movie'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : 'bg-purple-100 text-purple-800 border border-purple-200'
+                        }`}>
+                          {item.type === 'Movie' ? '🎬' : '📺'} {item.type}
+                        </span>
                       </div>
-                      <div className="flex space-x-3 lg:flex-shrink-0">
-                        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm text-gray-900">{item.director}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm text-gray-900">{item.budget}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm text-gray-900">{item.location}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center space-x-2">
+                        <Dialog>
                           <DialogTrigger asChild>
                             <Button onClick={() => handleEdit(item)} variant="outline" size="sm" className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors">
                               ✏️ Edit
@@ -650,11 +651,13 @@ const Dashboard: React.FC = () => {
                           🗑️ Delete
                         </Button>
                       </div>
-                    </div>
-                  </li>
+                    </td>
+                  </tr>
                 ))
               )}
-            </ul>
+                </tbody>
+              </table>
+            </div>
             {hasMore && movieShows.length > 0 && (
               <div className="px-6 py-4 text-center">
                 <Button
@@ -680,7 +683,7 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         </div>
-        </div>
+      </div>
       </main>
     </div>
   );
