@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: movieapp-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Set this in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true # Auto-generate secure secret
+    healthCheckPath: /api/health
