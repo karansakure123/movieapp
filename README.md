@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Movie & TV Show Manager
 
 A full-stack web application for managing personal movie and TV show collections. Built with React, Node.js, Express, Prisma, and MySQL.
@@ -251,3 +252,7 @@ If you have any questions or need help, please open an issue on GitHub.
 ---
 
 **Happy movie managing! 🎬🍿**
+=======
+# movieapp
+ Full-Stack Movie &amp; TV Show Manager built with React, Node.js, Express &amp; MySQL — add, edit, delete, and view your favorite titles with infinite scrolling.
+>>>>>>> c777816329a320a0d8b29eb6aeb1cbd77b61392a
