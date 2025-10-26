@@ -21,8 +21,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]'
       },
     },
     assetsInlineLimit: 0,
+    outDir: 'dist',
+    emptyOutDir: true,
   },
 })
