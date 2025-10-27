@@ -1,8 +1,8 @@
 # Use Node.js 18 Alpine for smaller image size
 FROM node:18-alpine
 
-# Install bash for Railway compatibility
-RUN apk add --no-cache bash
+# Install bash and curl for Railway compatibility
+RUN apk add --no-cache bash curl
 
 # Set working directory
 WORKDIR /app
@@ -10,8 +10,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --include=dev && npm cache clean --force
+# Verify npm is available and install dependencies
+RUN node --version && npm --version && npm ci --include=dev && npm cache clean --force
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma/
