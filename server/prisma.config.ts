@@ -7,6 +7,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   engine: "classic",
+  enableTracing: false,
   datasource: {
     url: process.env.DATABASE_URL as string,
   },

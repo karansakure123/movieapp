@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // Get all movie shows with pagination, search and filter
 export const getMovieShows = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, type } = paginationSchema.parse(req.query);
+    const { page = 1, limit = 20, search, type } = paginationSchema.parse(req.query);
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -88,8 +88,17 @@ export const createMovieShow = async (req, res) => {
   try {
     const validatedData = createMovieShowSchema.parse(req.body);
 
+    // Handle image upload
+    let imagePath = null;
+    if (req.file) {
+      imagePath = `/uploads/${req.file.filename}`;
+    }
+
     const movieShow = await prisma.movieShow.create({
-      data: validatedData
+      data: {
+        ...validatedData,
+        image: imagePath
+      }
     });
 
     res.status(201).json({
@@ -122,9 +131,18 @@ export const updateMovieShow = async (req, res) => {
     const { id } = idSchema.parse(req.params);
     const validatedData = updateMovieShowSchema.parse(req.body);
 
+    // Handle image upload
+    let imagePath = validatedData.image; // Keep existing image if no new upload
+    if (req.file) {
+      imagePath = `/uploads/${req.file.filename}`;
+    }
+
     const movieShow = await prisma.movieShow.update({
       where: { id },
-      data: validatedData
+      data: {
+        ...validatedData,
+        image: imagePath
+      }
     });
 
     res.json({

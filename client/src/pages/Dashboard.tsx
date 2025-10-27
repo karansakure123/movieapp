@@ -30,7 +30,7 @@ interface MovieShowFormData {
   location: string;
   duration: string;
   yearTime: string;
-  image: string;
+  image: File | null;
 }
 
 const Dashboard: React.FC = () => {
@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
     location: '',
     duration: '',
     yearTime: '',
-    image: ''
+    image: null
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -60,7 +60,7 @@ const Dashboard: React.FC = () => {
     try {
       const params = new URLSearchParams();
       params.append('page', pageNum.toString());
-      params.append('limit', '10');
+      params.append('limit', '20');
 
       if (searchTerm) params.append('search', searchTerm);
       if (filterType && filterType !== 'all') params.append('type', filterType);
@@ -74,11 +74,16 @@ const Dashboard: React.FC = () => {
         setMovieShows(newData);
       }
 
-      setHasMore(newData.length === 10);
+      setHasMore(newData.length === 20);
       setLoading(false);
       setIsLoadingMore(false);
-    } catch (err) {
-      setError('Failed to fetch movie shows');
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        logout();
+        setError('Session expired. Please login again.');
+      } else {
+        setError('Failed to fetch movie shows');
+      }
       setLoading(false);
       setIsLoadingMore(false);
     }
@@ -101,7 +106,7 @@ const Dashboard: React.FC = () => {
       location: '',
       duration: '',
       yearTime: '',
-      image: ''
+      image: null
     });
   };
 
@@ -120,7 +125,7 @@ const Dashboard: React.FC = () => {
       location: item.location,
       duration: item.duration,
       yearTime: item.yearTime,
-      image: item.image || ''
+      image: null // File input can't be pre-filled, user needs to select new file
     });
     // setIsEditDialogOpen(true);
   };
@@ -150,7 +155,12 @@ const Dashboard: React.FC = () => {
                 setMovieShows(movieShows.filter(item => item.id !== id));
                 toast.success('Item deleted successfully!');
               } catch (error: any) {
-                toast.error(error?.response?.data?.message || 'Failed to delete item');
+                if (error?.response?.status === 403) {
+                  logout();
+                  toast.error('Session expired. Please login again.');
+                } else {
+                  toast.error(error?.response?.data?.message || 'Failed to delete item');
+                }
               }
             }}
             className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
@@ -167,10 +177,33 @@ const Dashboard: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.type) {
+      toast.error('Please select a type (Movie or TV Show)');
+      return;
+    }
+
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('type', formData.type);
+      formDataToSend.append('director', formData.director);
+      formDataToSend.append('budget', formData.budget);
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('duration', formData.duration);
+      formDataToSend.append('yearTime', formData.yearTime);
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+
       if (editingItem) {
         // Update existing item
-        const response = await axios.put(`http://localhost:5000/api/movie-shows/${editingItem.id}`, formData);
+        const response = await axios.put(`http://localhost:5000/api/movie-shows/${editingItem.id}`, formDataToSend, config);
         setMovieShows(movieShows.map(item =>
           item.id === editingItem.id ? response.data.data : item
         ));
@@ -178,7 +211,7 @@ const Dashboard: React.FC = () => {
         // setIsEditDialogOpen(false);
       } else {
         // Create new item
-        const response = await axios.post('http://localhost:5000/api/movie-shows', formData);
+        const response = await axios.post('http://localhost:5000/api/movie-shows', formDataToSend, config);
         setMovieShows([response.data.data, ...movieShows]);
         toast.success('Item added successfully!');
         setIsAddDialogOpen(false);
@@ -186,7 +219,12 @@ const Dashboard: React.FC = () => {
       resetForm();
       setEditingItem(null);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to save item');
+      if (error?.response?.status === 403) {
+        logout();
+        toast.error('Session expired. Please login again.');
+      } else {
+        toast.error(error?.response?.data?.message || 'Failed to save item');
+      }
     }
   };
 
@@ -283,6 +321,8 @@ const Dashboard: React.FC = () => {
                           <SelectItem value="TV Show">📺 TV Show</SelectItem>
                         </SelectContent>
                       </Select>
+                      {formData.type === '' && <p className="text-red-500 text-sm mt-1">Please select a type</p>}
+                      {formData.type === '' && <p className="text-red-500 text-sm mt-1">Please select a type</p>}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -336,23 +376,12 @@ const Dashboard: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="image">Image URL (Optional)</Label>
+                    <Label htmlFor="image">Poster Image (Optional)</Label>
                     <Input
                       id="image"
-                      type="url"
-                      value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
-                      placeholder="Enter image URL or leave empty"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="image">Image URL (Optional)</Label>
-                    <Input
-                      id="image"
-                      type="url"
-                      value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
-                      placeholder="Enter image URL or leave empty"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setFormData({...formData, image: e.target.files?.[0] || null})}
                     />
                   </div>
                   <div className="flex justify-end space-x-2 pt-4">
@@ -386,16 +415,20 @@ const Dashboard: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Poster</th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Title & Type</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Title</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Director</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Budget</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Year/Time</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
               {movieShows.length === 0 ? (
-                <li className="px-6 py-12 text-center">
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
                   <div className="text-gray-400 mb-4">
                     <span className="text-6xl">🎭</span>
                   </div>
@@ -497,7 +530,8 @@ const Dashboard: React.FC = () => {
                       </form>
                     </DialogContent>
                   </Dialog>
-                </li>
+                  </td>
+                </tr>
               ) : (
                 movieShows.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
@@ -509,25 +543,26 @@ const Dashboard: React.FC = () => {
                           className="w-16 h-20 object-cover rounded-lg border border-gray-200 shadow-sm mx-auto"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
                           }}
                         />
-                      ) : (
-                        <div className="w-16 h-20 bg-gray-100 rounded-lg flex items-center justify-center mx-auto">
-                          <span className="text-gray-400 text-2xl">🎬</span>
-                        </div>
-                      )}
+                      ) : null}
+                      <div className={`w-16 h-20 bg-gray-100 rounded-lg flex items-center justify-center mx-auto ${item.image ? 'hidden' : ''}`}>
+                        <span className="text-gray-400 text-2xl">🎬</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <h3 className="text-sm font-semibold text-gray-900">{item.title}</h3>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          item.type === 'Movie'
-                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                            : 'bg-purple-100 text-purple-800 border border-purple-200'
-                        }`}>
-                          {item.type === 'Movie' ? '🎬' : '📺'} {item.type}
-                        </span>
-                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900">{item.title}</h3>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        item.type === 'Movie'
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : 'bg-purple-100 text-purple-800 border border-purple-200'
+                      }`}>
+                        {item.type === 'Movie' ? '🎬' : '📺'} {item.type}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="text-sm text-gray-900">{item.director}</span>
@@ -537,6 +572,12 @@ const Dashboard: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="text-sm text-gray-900">{item.location}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm text-gray-900">{item.duration}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm text-gray-900">{item.yearTime}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center space-x-2">
@@ -625,14 +666,17 @@ const Dashboard: React.FC = () => {
                                   />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                  <Label htmlFor="edit-image">Image URL (Optional)</Label>
+                                  <Label htmlFor="edit-image">Poster Image (Optional)</Label>
                                   <Input
                                     id="edit-image"
-                                    type="url"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({...formData, image: e.target.value})}
-                                    placeholder="Enter image URL or leave empty"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setFormData({...formData, image: e.target.files?.[0] || null})}
+                                    placeholder="Select new image file"
                                   />
+                                  {editingItem?.image && (
+                                    <p className="text-sm text-gray-500">Leave empty to keep current image</p>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex justify-end space-x-2 pt-4">
