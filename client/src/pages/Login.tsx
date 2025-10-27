@@ -12,6 +12,7 @@ interface LoginFormData {
   password: string;
 }
 
+
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
