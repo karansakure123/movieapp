@@ -3,7 +3,7 @@ services:
     name: movieapp-server
     runtime: node
     rootDir: server
-    buildCommand: npm install
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -12,4 +12,14 @@ services:
         sync: false # Set this in Render dashboard
       - key: JWT_SECRET
         generateValue: true # Auto-generate secure secret
+      - key: FRONTEND_URL
+        value: https://your-netlify-app.netlify.app
     healthCheckPath: /api/health
+
+  - type: pserv
+    name: movieapp-database
+    runtime: mysql
+    version: 8.0
+    databaseName: movieapp
+    user: movieapp_user
+    # Password will be auto-generated and available in dashboard
