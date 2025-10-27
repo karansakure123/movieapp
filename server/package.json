@@ -7,14 +7,14 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'No build step required'",
+    "build": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:push": "prisma db push",
     "postinstall": "prisma generate"
   },
   "keywords": ["movieapp", "backend", "nodejs", "express", "prisma"],
-  "author": "Your Name",
+  "author": "Karan ",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.22.0",
