@@ -10,8 +10,15 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Debug: Check what's available
+RUN ls -la && which node && which npm
+
 # Verify npm is available and install dependencies
-RUN node --version && npm --version && npm ci --include=dev && npm cache clean --force
+RUN node --version && \
+    npm --version && \
+    echo "Installing dependencies..." && \
+    npm ci --include=dev && \
+    npm cache clean --force
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma/
